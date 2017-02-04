@@ -99,7 +99,6 @@ class BuscaMinas(Frame):
         self.cantp = 0
 
     def pisada(self, event):
-        # print ("{}, {}".format(self.cantp, ((self.cantx * self.canty) - self.cantm)))
         if self.bloqueado:
             return
         if self.encurso == False:
@@ -116,13 +115,11 @@ class BuscaMinas(Frame):
                 self.encurso = False
                 valor = "@"
             else:
-                # print("contando {},{}".format(idx, idy))
                 self.cantp += 1
                 valor = str(self.contarMinas(idx, idy))
             self.configurarBoton((idx, idy), valor)
             if valor == "0":
                 self.carita.set(":-o")
-                # print("{}, {} es 0!!".format(idx, idy))
                 self.mostrarCeros(idx,idy)
                 self.carita.set(":-)")
             if self.cantp == ((self.cantx * self.canty) - self.cantm):
@@ -144,8 +141,10 @@ class BuscaMinas(Frame):
         self.minas = []
         random.seed()
         for i in range(self.cantm):
-            mx = random.randint(0, self.cantx - 1)
-            my = random.randint(0, self.canty - 1)
+            mx, my = 0, 0
+            while (mx, my) in self.minas:
+                mx = random.randint(0, self.cantx - 1)
+                my = random.randint(0, self.canty - 1)
             self.minas.append((mx, my))
 
     def mostrarMinas(self):
@@ -180,11 +179,15 @@ class BuscaMinas(Frame):
                 self.configurarBoton((i, j), "")
 
     def mostrarCeros(self, x, y):
-        # print("mostrando ceros para {}, {}".format(x, y))
-        vecinos = [(x - 1, y),
+        vecinos = [(x - 1, y - 1),
+                   (x - 1, y),
+                   (x - 1, y + 1),
                    (x, y - 1),
                    (x, y + 1),
-                   (x + 1, y)]
+                   (x + 1, y - 1),
+                   (x + 1, y),
+                   (x + 1, y + 1)]
+        cont = 0
         for vecino in vecinos:
             vx = vecino[0]
             vy = vecino[1]
@@ -192,15 +195,10 @@ class BuscaMinas(Frame):
                 and ((vy >= 0) and (vy < self.canty))
                 and (self.valorBoton(vx, vy) == "")):
                 self.cantp += 1
-                # print("contando {}, {}".format(vx, vy))
                 cont = self.contarMinas(vx, vy)
+                self.configurarBoton((vx, vy), str(cont))
                 if cont == 0:
-                    # print("{}, {} es 0!!".format(vx, vy))
-                    # input()
-                    self.configurarBoton((vx, vy), str(cont))
                     self.mostrarCeros(vx, vy)
-                else:
-                    self.configurarBoton((vx, vy), str(cont))
                     
     def iniciarReloj(self):
         self.tinicio = datetime.datetime.now()
@@ -225,21 +223,20 @@ class BuscaMinas(Frame):
 
     def configurarBoton(self, control, texto, vartexto=None):
         if type(control) is tuple:
-            # print("{}, {}".format(texto, type(texto)))
             self.botones[control[0]][control[1]][1].set(texto)
             control = self.botones[control[0]][control[1]][0]
         else:
             vartexto.set(texto)
         colores = {"": (None, None),
                    "0": ("#AAAAAA", None),
-                   "1": ("#00FF00", None),
-                   "2": ("#55FF00", None),
-                   "3": ("#AAFF00", None),
+                   "1": ("#15D515", None),
+                   "2": ("#D5D515", None),
+                   "3": ("#D55F15", None),
                    "4": ("#FFFF00", None),
-                   "5": ("#FFAA00", None),
-                   "6": ("#FF5500", None),
-                   "7": ("#FF0000", None),
-                   "8": ("#FF0000", None),
+                   "5": ("#D51515", None),
+                   "6": ("#D51515", None),
+                   "7": ("#D51515", None),
+                   "8": ("#D51515", None),
                    "X": ("#000000", None),
                    "*": ("#000000", None),
                    "@": ("#000000", "#FF0000"),
@@ -247,10 +244,13 @@ class BuscaMinas(Frame):
         poner = {}
         if colores[texto][0]:
             poner["foreground"] = colores[texto][0]
+            poner["activeforeground"] = colores[texto][0]
         if colores[texto][1]:
             poner["background"] = colores[texto][1]
+            poner["activebackground"] = colores[texto][1]
         else:
             poner["background"] = self.fondoNormal
+            poner["activebackground"] = self.fondoNormal
         if poner:
             control.configure(**poner)
         
