@@ -232,7 +232,7 @@ class BuscaMinas(Frame):
                    "1": ("#15D515", None),
                    "2": ("#D5D515", None),
                    "3": ("#D55F15", None),
-                   "4": ("#FFFF00", None),
+                   "4": ("#D51515", None),
                    "5": ("#D51515", None),
                    "6": ("#D51515", None),
                    "7": ("#D51515", None),
