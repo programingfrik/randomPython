@@ -22,7 +22,7 @@ class BuscaMinas(Frame):
         Frame.__init__(self, master)
         self.cantx = 10
         self.canty = 10
-        self.cantm = 10
+        self.cantm = 25
         self.minas = []
         self.posibles = 0
         self.bloqueado = False
@@ -141,8 +141,9 @@ class BuscaMinas(Frame):
         self.minas = []
         random.seed()
         for i in range(self.cantm):
-            mx, my = 0, 0
-            while (mx, my) in self.minas:
+            mx = random.randint(0, self.cantx - 1)
+            my = random.randint(0, self.canty - 1)
+            while ((mx, my) in self.minas):
                 mx = random.randint(0, self.cantx - 1)
                 my = random.randint(0, self.canty - 1)
             self.minas.append((mx, my))
