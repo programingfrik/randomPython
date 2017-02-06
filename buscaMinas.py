@@ -140,13 +140,11 @@ class BuscaMinas(Frame):
     def ponerMinas(self):
         self.minas = []
         random.seed()
-        for i in range(self.cantm):
+        while len(self.minas) < self.cantm:
             mx = random.randint(0, self.cantx - 1)
             my = random.randint(0, self.canty - 1)
-            while ((mx, my) in self.minas):
-                mx = random.randint(0, self.cantx - 1)
-                my = random.randint(0, self.canty - 1)
-            self.minas.append((mx, my))
+            if not (mx, my) in self.minas:
+                self.minas.append((mx, my))
 
     def mostrarMinas(self):
         for mina in self.minas:
