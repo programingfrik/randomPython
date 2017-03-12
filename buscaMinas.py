@@ -108,6 +108,7 @@ class BuscaMinas(Frame):
         idy = event.widget.idy
         valor = self.valorBoton(idx, idy)
         if (event.num == 1) and (valor == ""):
+            self.aplanadoBoton(idx, idy, True)
             if (idx, idy) in self.minas:
                 self.mostrarMinas()
                 self.carita.set(":-(")
@@ -176,6 +177,7 @@ class BuscaMinas(Frame):
         for i in range(self.cantx):
             for j in range(self.canty):
                 self.configurarBoton((i, j), "")
+                self.aplanadoBoton(i, j, False)
 
     def mostrarCeros(self, x, y):
         vecinos = [(x - 1, y - 1),
@@ -194,6 +196,7 @@ class BuscaMinas(Frame):
                 and ((vy >= 0) and (vy < self.canty))
                 and (self.valorBoton(vx, vy) == "")):
                 self.cantp += 1
+                self.aplanadoBoton(vx, vy, True)
                 cont = self.contarMinas(vx, vy)
                 self.configurarBoton((vx, vy), str(cont))
                 if cont == 0:
@@ -252,6 +255,13 @@ class BuscaMinas(Frame):
             poner["activebackground"] = self.fondoNormal
         if poner:
             control.configure(**poner)
+
+    def aplanadoBoton(self, x, y, aplanado):
+        control = self.botones[x][y][0]
+        if aplanado:
+            control.configure(relief = "flat")
+        else:
+            control.configure(relief = "raised")
         
 app = BuscaMinas()
 app.master.title("Busca Minas")
