@@ -75,6 +75,7 @@ class BuscaMinas(Frame):
                 btTemp.idx = i
                 btTemp.idy = j
                 btTemp.bind("<ButtonRelease-1>", self.pisada)
+                btTemp.bind("<ButtonRelease-2>", self.pisada)
                 btTemp.bind("<ButtonRelease-3>", self.pisada)
                 btTemp.grid(row = i, column = j)
                 self.configurarBoton(btTemp, "", txTemp)
@@ -99,6 +100,7 @@ class BuscaMinas(Frame):
         self.cantp = 0
 
     def pisada(self, event):
+        """Determina el tipo de pisada."""
         if self.bloqueado:
             return
         if self.encurso == False:
@@ -106,29 +108,19 @@ class BuscaMinas(Frame):
             self.iniciarReloj()
         idx = event.widget.idx
         idy = event.widget.idy
-        valor = self.valorBoton(idx, idy)
-        if (event.num == 1) and (valor == ""):
-            self.aplanadoBoton(idx, idy, True)
-            if (idx, idy) in self.minas:
-                self.mostrarMinas()
-                self.carita.set(":-(")
-                self.bloqueado = True
-                self.encurso = False
-                valor = "@"
-            else:
-                self.cantp += 1
-                valor = str(self.contarMinas(idx, idy))
-            self.configurarBoton((idx, idy), valor)
-            if valor == "0":
-                self.carita.set(":-o")
-                self.mostrarCeros(idx,idy)
-                self.carita.set(":-)")
-            if self.cantp == ((self.cantx * self.canty) - self.cantm):
-                self.encurso = False
-                self.bloqueado = True
-                self.carita.set("8-D")
-                showinfo("Busca Minas", "Lo has logrado tío! Contratulaciones!")
+        if (event.num == 1) or (event.num == 2):
+            self.pisar(idx, idy)
+        if event.num == 2:
+            vecinos = self.calcularVecinos(idx, idy)
+            for vecino in vecinos:
+                vex, vey = vecino
+                if (((vex >= 0) and (vex < self.cantx))
+                    and ((vey >= 0) and (vey < self.canty))):
+                    self.pisar(vex, vey)
+                if self.encurso == False:
+                    break
         elif event.num == 3:
+            valor = self.valorBoton(idx, idy)
             if valor == "X":
                 valor = ""
                 self.posibles -= 1
@@ -137,6 +129,32 @@ class BuscaMinas(Frame):
                 self.posibles += 1
             self.actualizarCantM()
             self.configurarBoton((idx, idy), valor)
+
+    def pisar(self, x, y):
+        """Pisa el boton que se indica con las coordenadas."""
+        valor = self.valorBoton(x, y)
+        if valor != "":
+            return
+        self.aplanadoBoton(x, y, True)
+        if (x, y) in self.minas:
+            self.mostrarMinas()
+            self.carita.set(":-(")
+            self.bloqueado = True
+            self.encurso = False
+            valor = "@"
+        else:
+            self.cantp += 1
+            valor = str(self.contarMinas(x, y))
+        self.configurarBoton((x, y), valor)
+        if valor == "0":
+            self.carita.set(":-o")
+            self.mostrarCeros(x, y)
+            self.carita.set(":-)")
+        if self.cantp == ((self.cantx * self.canty) - self.cantm):
+            self.encurso = False
+            self.bloqueado = True
+            self.carita.set("8-D")
+            showinfo("Busca Minas", "Lo has logrado tío! Contratulaciones!")
 
     def ponerMinas(self):
         self.minas = []
@@ -158,15 +176,18 @@ class BuscaMinas(Frame):
                 valor = "*"
             self.configurarBoton((x, y), valor)
 
+    def calcularVecinos(self, x, y):
+        return [(x - 1, y - 1),
+                (x - 1, y),
+                (x - 1, y + 1),
+                (x, y - 1),
+                (x, y + 1),
+                (x + 1, y - 1),
+                (x + 1, y),
+                (x + 1, y + 1)]
+    
     def contarMinas(self, x, y):
-        vecinos = [(x - 1, y - 1),
-                   (x - 1, y),
-                   (x - 1, y + 1),
-                   (x, y - 1),
-                   (x, y + 1),
-                   (x + 1, y - 1),
-                   (x + 1, y),
-                   (x + 1, y + 1)]
+        vecinos = self.calcularVecinos(x, y)
         cont = 0
         for vecino in vecinos:
             if vecino in self.minas:
@@ -180,14 +201,7 @@ class BuscaMinas(Frame):
                 self.aplanadoBoton(i, j, False)
 
     def mostrarCeros(self, x, y):
-        vecinos = [(x - 1, y - 1),
-                   (x - 1, y),
-                   (x - 1, y + 1),
-                   (x, y - 1),
-                   (x, y + 1),
-                   (x + 1, y - 1),
-                   (x + 1, y),
-                   (x + 1, y + 1)]
+        vecinos = self.calcularVecinos(x, y)
         cont = 0
         for vecino in vecinos:
             vx = vecino[0]
