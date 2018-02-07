@@ -23,6 +23,7 @@
 
 import sys
 import urllib.request
+import urllib.error
 
 def permutar(palabra, estado):
     # incrementa el estado
@@ -53,13 +54,14 @@ def probarPermutacion(palabra, fuentes):
     for fuente in fuentes:
         direccion = fuente + palabra
         # si encuentra la permutación en esta fuente, entonces esta es la palabra.
+        request = None
         try:
             request = urllib.request.urlopen(direccion)
             codigo = request.getcode()
-        except:
-            codigo = 404
+        except urllib.error.HTTPError as error:
+            codigo = error.code
         finally:
-            if 'request' in locals():
+            if request:
                 request.close()
         if codigo == 200:
             print("Encontré \"{}\" en \"{}\".".format(palabra, direccion))
