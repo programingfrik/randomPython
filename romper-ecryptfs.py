@@ -28,11 +28,11 @@ def probarPalabra(fichpassph, palabra):
 def ataque_diccionario(fichpassph):
     global config
     print("Haciendo el ataque del diccionario")
-    # lee el diccionario
+    # Lee el diccionario.
     roto = False
     with open(config["rtdicc"], "r") as fich:
         for linea in fich:
-            # prueba cada palabra en el diccionario.
+            # Prueba cada palabra en el diccionario.
             roto = probarPalabra(linea.replace("\n", ""))
             if roto:
                 print("Entcontré el passphrase la palabra \"{}\"!!".format(palabra))
@@ -42,11 +42,13 @@ def ataque_diccionario(fichpassph):
                   + " y no se ha podido romper el passphrase")
 
 def main():
-    print("Tratando de romper el passpharse {}.".format(fichero))
+    # Revisa los argumentos.
     if sys.argv != 2:
         print("El uso correcto es \"romper-ecryptfs.py"
               + " /home/pedro/.ecryptfs/wrapped-passphrase\"")
         sys.exit(1)
+    print("Tratando de romper el passpharse {}.".format(sys.argv[1]))
+
     ataque_diccionario(sys.argv[1])
 
 if __name__ == "__main__":
