@@ -32,8 +32,9 @@ def ataque_diccionario(fichpassph):
     roto = False
     with open(config["rtdicc"], "r") as fich:
         for linea in fich:
+            palabra = linea.replace("\n", "")
             # Prueba cada palabra en el diccionario.
-            roto = probarPalabra(fichpassph, linea.replace("\n", ""))
+            roto = probarPalabra(fichpassph, palabra)
             if roto:
                 print("Entcontré el passphrase la palabra \"{}\"!!".format(palabra))
                 break
