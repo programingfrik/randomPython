@@ -7,7 +7,6 @@ import sys
 import pexpect
 
 config = {
-    "rtdicc": "../diccionario.txt",
     "ecryptcomm": "ecryptfs-unwrap-passphrase"
 }
 
@@ -25,15 +24,14 @@ def probarPalabra(fichpassph, palabra):
         print("La clave \"{}\" fue exitosa.".format(palabra))
         return True
 
-def ataque_diccionario(fichpassph):
-    global config
+def ataque_diccionario(fichpassph, fuente):
     print("Haciendo el ataque del diccionario")
     # Lee el diccionario.
     roto = False
-    with open(config["rtdicc"], "r") as fich:
+    with open(fuente, "r") as fich:
         # Prueba cada palabra en el diccionario.
         for linea in fich:
-            palabra = linea.replace("\n", "").strip()
+            palabra = linea[:-1].strip()
             roto = probarPalabra(fichpassph, palabra.capitalize())
             if roto:
                 print("Entcontré el passphrase la palabra \"{}\"!!".format(palabra))
@@ -44,21 +42,57 @@ def ataque_diccionario(fichpassph):
                 break
             roto = probarPalabra(fichpassph, palabra.lower())
             if roto:
-                print("Entcontré el passphrase la palabra \"{}\"!!".format(palabra))
+                print("Encontré el passphrase la palabra \"{}\"!!".format(palabra))
                 break
         else:
             print("Se probaron todas las palabras disponibles"
                   + " y no se ha podido romper el passphrase")
 
+def ataque_combinaciones(fichpassph, fuente):
+    print("Haciendo el ataque de combinaciones de strings")
+    partes = []
+    contadores = [0]
+    combinacion = ""
+    roto = False
+    with open(fuente, "r") as hfuente:
+        # Pon todas las lineas de fuente en partes.
+        for linea in hfuente:
+            valor = linea[:-1].strip()
+            partes.append(valor)
+    cant = len(partes)
+    while not roto:
+        combinacion = ""
+        # Arma la combinación.
+        for i in contadores:
+            combinacion += partes[i]
+        # Prueba la combinación.
+        roto = probarPalabra(fichpassph, combinacion)
+        # Si encontraste la combinación rompe el bucle.
+        if roto:
+            print("Encontré le passphrase la palabra \"{}\"!!".format(palabra))
+            break
+        # Aumenta los contadores.
+        i = 0
+        # Aumenta el contador 0
+        contadores[i] += 1
+        # Mientras sea necesario propagar a los siguientes contadores recorrelos.
+        while contadores[i] >= len(partes):
+            contadores[i] = 0
+            if i == (len(contadores) - 1):
+                contadores.append(0)
+            else:
+                i += 1
+                contadores[i] += 1
+
 def main():
     # Revisa los argumentos.
-    if len(sys.argv) != 2:
+    if len(sys.argv) != 3:
         print("El uso correcto es \"romper-ecryptfs.py"
-              + " /home/pedro/.ecryptfs/wrapped-passphrase\"")
+              + " /home/pedro/.ecryptfs/wrapped-passphrase\""
+              + " /home/pedro/diccionario.txt")
         sys.exit(1)
     print("Tratando de romper el passpharse {}.".format(sys.argv[1]))
-
-    ataque_diccionario(sys.argv[1])
+    ataque_combinaciones(sys.argv[1], sys.argv[2])
 
 if __name__ == "__main__":
     main()
