@@ -43,7 +43,7 @@ def ataque_diccionario(fichpassph):
 
 def main():
     # Revisa los argumentos.
-    if sys.argv != 2:
+    if len(sys.argv) != 2:
         print("El uso correcto es \"romper-ecryptfs.py"
               + " /home/pedro/.ecryptfs/wrapped-passphrase\"")
         sys.exit(1)
