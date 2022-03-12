@@ -1,4 +1,4 @@
-#!/usr/bin/ipy
+#!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
 # Esto es un script para tratar de romper un passphrase de ecryptfs usando fuerza bruta.
