@@ -13,8 +13,8 @@ config = {
 }
 inicio = None
 final = None
-cantpp = 3   # Cantidad de pruebas por punto.
-cantpr = 20  # Cantidad de pruebas por reporte.
+cantpp = 10   # Cantidad de pruebas por punto.
+cantpr = 1000  # Cantidad de pruebas por reporte.
 
 def probarPalabra(fichpassph, palabra):
     global config
@@ -54,23 +54,40 @@ def ataque_diccionario(fichpassph, fuente):
             print("Se probaron todas las palabras disponibles"
                   + " y no se ha podido romper el passphrase")
 
-def ataque_combinaciones(fichpassph, fuente):
-    global inicio
-    print("Haciendo el ataque de combinaciones de strings")
+def lee_partes(fuente):
     partes = []
-    contadores = [0]
-    combinacion = ""
-    roto = False
-    cprob = 0
     with open(fuente, "r") as hfuente:
         # Pon todas las lineas de fuente en partes.
         for linea in hfuente:
-            valor = linea[:-1].strip()
+            valor = linea[:-1].strip().lower()
             partes.append(valor)
+    return partes
+
+def elimina_duplicados(partes):
+    cont = 0
+    seg = 0
+    while cont < len(partes):
+        seg = cont + 1
+        while seg < len(partes):
+            if partes[cont] == partes[seg]:
+                del(partes[seg])
+            else:
+                seg += 1
+        cont += 1
+
+def ataque_combinaciones(fichpassph, fuente, contadores):
+    global inicio
+    print("Haciendo el ataque de combinaciones de strings")
+    combinacion = ""
+    roto = False
+    cprob = 0
+    partes = lee_partes(fuente)
+    # Elimina todas las repeticiones
+    elimina_duplicados(partes)
     cant = len(partes)
+    print("Probando combinaciones con {} cadenas.".format(cant))
     while not roto:
         # print(contadores)
-
         combinacion = ""
         # Arma la combinación.
         for i in contadores:
@@ -106,17 +123,22 @@ def ataque_combinaciones(fichpassph, fuente):
 
 def main():
     global inicio, final
+    contadores = [0]
     # Revisa los argumentos.
-    if len(sys.argv) != 3:
+    if len(sys.argv) < 3:
         print("El uso correcto es \"romper-ecryptfs.py"
               + " /home/pedro/.ecryptfs/wrapped-passphrase\""
               + " /home/pedro/diccionario.txt")
         sys.exit(1)
+    for arg in sys.argv[3:]:
+        if arg.startswith("--cont="):
+            contadores = [int(parte) for parte in arg[len("--cont="):].split("-")]
+            print("Iniciando en Contador {}".format(contadores))
     print("Tratando de romper el passpharse {}.".format(sys.argv[1]))
     # toma el tiempo de inicio
     inicio = datetime.datetime.now()
     print("Comenzando a las {}".format(inicio))
-    ataque_combinaciones(sys.argv[1], sys.argv[2])
+    ataque_combinaciones(sys.argv[1], sys.argv[2], contadores)
     # toma el tiempo final
     final = datetime.datetime.now()
     # Haz un reporte final del tiempo
