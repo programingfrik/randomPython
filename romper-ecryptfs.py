@@ -14,7 +14,7 @@ config = {
 inicio = None
 final = None
 cantpp = 10   # Cantidad de pruebas por punto.
-cantpr = 1000  # Cantidad de pruebas por reporte.
+cantpr = 100  # Cantidad de pruebas por reporte.
 
 def probarPalabra(fichpassph, palabra):
     global config
@@ -77,7 +77,7 @@ def elimina_duplicados(partes):
 
 def ataque_combinaciones(fichpassph, fuente, contadores):
     global inicio
-    print("Haciendo el ataque de combinaciones de strings")
+    print("Haciendo el ataque de combinaciones de partes de cadenas")
     combinacion = ""
     roto = False
     cprob = 0
@@ -85,7 +85,7 @@ def ataque_combinaciones(fichpassph, fuente, contadores):
     # Elimina todas las repeticiones
     elimina_duplicados(partes)
     cant = len(partes)
-    print("Probando combinaciones con {} cadenas.".format(cant))
+    print("Probando combinaciones con {} partes.".format(cant))
     while not roto:
         # print(contadores)
         combinacion = ""
@@ -95,6 +95,7 @@ def ataque_combinaciones(fichpassph, fuente, contadores):
         # Prueba la combinación.
         roto = probarPalabra(fichpassph, combinacion)
         cprob += 1
+        # Imprime el punto o el reporte si toca hacerlo.
         if (cprob % cantpp) == 0:
             print(".", end = "", flush = True)
         if (cprob % cantpr) == 0:
