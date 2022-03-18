@@ -13,8 +13,9 @@ config = {
 }
 inicio = None
 final = None
-cantpp = 10   # Cantidad de pruebas por punto.
+cantcp = 10   # Cantidad de combinaciones probadas por punto.
 cantpr = 100  # Cantidad de pruebas por reporte.
+cantpp = 1000 # Cantidad de pruebas por paquete.
 
 def probarPalabra(fichpassph, palabra):
     global config
@@ -63,7 +64,7 @@ def lee_partes(fuente):
             partes.append(valor)
     return partes
 
-def elimina_duplicados(partes):
+def elimina_repeticiones(partes):
     cont = 0
     seg = 0
     while cont < len(partes):
@@ -75,52 +76,79 @@ def elimina_duplicados(partes):
                 seg += 1
         cont += 1
 
-def ataque_combinaciones(fichpassph, fuente, contadores):
+def sumarle_decimal_contador(contador, base, decimal):
+    cont = len(contador) - 1
+    while (contador[cont] + decimal) >= base:
+        decimal += contador[cont]
+        contador[cont] = decimal % base
+        decimal = decimal // base
+        if (decimal > 0) and (cont == 0):
+            contador.insert(cont, 0)
+        elif (decimal > 0):
+            cont -= 1
+    contador[cont] += decimal
+
+def completa_ceros(contador, n):
+    contador = ([0] * (n - len(contador))) + contador
+    return contador
+
+def verificar_menor(conta, contb):
+    if len(conta) > len(contb):
+        contb = completa_ceros(contb, len(conta))
+    elif len(contb) > len(conta):
+        conta = completa_ceros(conta, len(contb))
+    return conta < contb
+
+def administrar_ataque_combinacion(fichpassph, fuente, conti):
+    global cantpp
+    roto = False
+    partes = lee_partes(fuente)
+    elimina_repeticiones(partes)
+    base = len(partes)
+    contfsel = conti
+    while not roto:
+        # Selecciona el próximo paquete.
+        contisel = contfsel.copy()
+        sumarle_decimal_contador(contfsel, base, cantpp)
+        # Prueba todas las combinaciones del paquete.
+        roto = ataque_combinaciones(fichpassph, partes, contisel, contfsel)
+
+def ataque_combinaciones(fichpassph, partes, conti, contf):
     global inicio
     print("Haciendo el ataque de combinaciones de partes de cadenas")
-    combinacion = ""
+    print("Probando del {} al {}.".format(conti, contf))
+    # print("ataque_combinaciones {} {} {}".format(partes, conti, contf))
     roto = False
+    combinacion = ""
     cprob = 0
-    partes = lee_partes(fuente)
-    # Elimina todas las repeticiones
-    elimina_duplicados(partes)
-    cant = len(partes)
-    print("Probando combinaciones con {} partes.".format(cant))
-    while not roto:
-        # print(contadores)
+    base = len(partes)
+    print("Probando combinaciones con {} partes.".format(base))
+    while verificar_menor(conti, contf):
+        # print(conti)
         combinacion = ""
         # Arma la combinación.
-        for i in contadores:
+        for i in conti:
             combinacion += partes[i]
         # Prueba la combinación.
         roto = probarPalabra(fichpassph, combinacion)
         cprob += 1
         # Imprime el punto o el reporte si toca hacerlo.
-        if (cprob % cantpp) == 0:
+        if (cprob % cantcp) == 0:
             print(".", end = "", flush = True)
         if (cprob % cantpr) == 0:
             actual = datetime.datetime.now()
             print("\nCantidad: {} Contador: {} Combinacion: \"{}\" Tiempo: {}".format(
-                cprob, contadores, combinacion, actual - inicio))
+                cprob, conti, combinacion, actual - inicio))
             print("Probando {} combinaciones por minuto".format(
                 math.floor(cprob / ((actual - inicio).total_seconds() / 60)) ))
         # Si encontraste la combinación rompe el bucle.
         if roto:
-            print("Encontré le passphrase la palabra \"{}\"!!".format(combinacion))
+            print("Encontré el passphrase, es la palabra \"{}\"!!".format(combinacion))
             break
-        # Aumenta los contadores.
-        i = 0
-        # Aumenta el contador 0
-        contadores[i] += 1
-        # Mientras sea necesario propagar a los siguientes contadores recorrelos.
-        while contadores[i] >= len(partes):
-            contadores[i] = 0
-            if i == (len(contadores) - 1):
-                contadores.append(0)
-            else:
-                i += 1
-                contadores[i] += 1
+        # Aumenta el contador.
+        sumarle_decimal_contador(conti, base, 1)
     print("Probé {} combinaciones.".format(cprob))
+    return roto
 
 def main():
     global inicio, final
@@ -136,11 +164,11 @@ def main():
             contadores = [int(parte) for parte in arg[len("--cont="):].split("-")]
             print("Iniciando en Contador {}".format(contadores))
     print("Tratando de romper el passpharse {}.".format(sys.argv[1]))
-    # toma el tiempo de inicio
+    # Toma el tiempo de inicio.
     inicio = datetime.datetime.now()
     print("Comenzando a las {}".format(inicio))
-    ataque_combinaciones(sys.argv[1], sys.argv[2], contadores)
-    # toma el tiempo final
+    administrar_ataque_combinacion(sys.argv[1], sys.argv[2], contadores)
+    # Toma el tiempo final
     final = datetime.datetime.now()
     # Haz un reporte final del tiempo
     print("Comenzamos a hacer intentos en: {}".format(inicio))
