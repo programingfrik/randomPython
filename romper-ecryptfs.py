@@ -21,6 +21,8 @@ inicio = None
 final = None
 cantcp = 10   # Cantidad de combinaciones probadas por punto.
 cantpr = 100  # Cantidad de pruebas por reporte.
+cprob = 0   # Cantidad de combinaciones probadas hasta el momento.
+
 
 cantpp = 1000 # Cantidad de pruebas por paquete.
 maxtp = datetime.timedelta(seconds = 60 * 10) # El tiempo máximo que se va a esperar un paquete.
@@ -159,7 +161,7 @@ def servir_trabajo():
         # Sino, si el pizarrón ya existe, ya tiene trabajos,
         # verificalo en busca de trabajos.
         for paquete in pizarron:
-            print("Comparando {}".format(paquete))
+            # print("Comparando {}".format(paquete))
             if (paquete[3] == 1) and ((datetime.datetime.now() - paquete[2]) > maxtp):
                 # Si encuentras un trabajo que ya se le pasó el tiempo, tomalo.
                 print ("Sirviendo trabajo viejo ...")
@@ -194,8 +196,11 @@ def servir_avisar_final(paquete):
     i = 0
     print("Recibiendo aviso de final ...")
     # Recorre los trabajos en el pizarrón
+    # print("Paquete {}".format(paquete))
+    # print("Pizarrón {}".format(pizarron))
     while i < len(pizarron):
         # Si aparece el trabajo que acaba de terminar ponlo en 0
+        # print("Comparando {} con {}".format(paquete[0], pizarron[i][0]))
         if paquete[0] == pizarron[i][0]:
             pizarron[i][3] = 0
         # Si hay un trabajo previo en el pizarron, también terminado
@@ -285,18 +290,18 @@ def armar_combinacion(partes, contador):
     return combinacion
 
 def ataque_combinaciones(fichpassph, partes, conti, contf):
-    global inicio
+    global inicio, cprob
     print("Haciendo el ataque de combinaciones de partes de cadenas")
     print("Probando del {} al {}.".format(conti, contf))
     # print("ataque_combinaciones {} {} {}".format(partes, conti, contf))
+    cont = conti.copy()
     roto = False
     combinacion = ""
-    cprob = 0
     base = len(partes)
     print("Probando combinaciones con {} partes.".format(base))
-    while verificar_menor(conti, contf):
-        # print(conti)
-        combinacion = armar_combinacion(partes, conti)
+    while verificar_menor(cont, contf):
+        # print(cont)
+        combinacion = armar_combinacion(partes, cont)
         # Prueba la combinación.
         roto = probarPalabra(fichpassph, combinacion)
         cprob += 1
@@ -306,7 +311,7 @@ def ataque_combinaciones(fichpassph, partes, conti, contf):
         if (cprob % cantpr) == 0:
             actual = datetime.datetime.now()
             print("\nCantidad: {} Contador: {} Combinacion: \"{}\" Tiempo: {}".format(
-                cprob, conti, combinacion, actual - inicio))
+                cprob, cont, combinacion, actual - inicio))
             print("Probando {} combinaciones por minuto".format(
                 math.floor(cprob / ((actual - inicio).total_seconds() / 60)) ))
         # Si encontraste la combinación rompe el bucle.
@@ -314,9 +319,9 @@ def ataque_combinaciones(fichpassph, partes, conti, contf):
             print("Encontré el passphrase, es la palabra \"{}\"!!".format(combinacion))
             break
         # Aumenta el contador.
-        sumarle_decimal_contador(conti, base, 1)
+        sumarle_decimal_contador(cont, base, 1)
     print("Probé {} combinaciones.".format(cprob))
-    return (roto, conti)
+    return (roto, cont)
 
 def escribir_pizarron(ver_mintep = True):
     global fichpizarron, pizarron, mintep, momue
