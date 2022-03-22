@@ -325,18 +325,18 @@ def escribir_pizarron(ver_mintep = True):
     print("Escribiendo fichero pizarron \"{}\"".format(fichpizarron))
     momue = datetime.datetime.now()
     with open(Path(fichpizarron).expanduser(), "w", newline="") as hfpizarron:
-        escritor = csv.writer(hfpizarron, delimiter = ",", quotechar="\"")
+        escritorcsv = csv.writer(hfpizarron, delimiter = ",", quotechar="\"")
         for paquete in pizarron:
             conti = "-".join([str(v) for v in paquete[0]])
             contf = "-".join([str(v) for v in paquete[1]])
-            escritor.writerow([conti, contf, paquete[2].isoformat(), paquete[3]])
+            escritorcsv.writerow([conti, contf, paquete[2].isoformat(), paquete[3]])
 
 def lee_pizarron():
     global fichpizarron, pizarron
     conti = []
     contf = []
     pizarron = []
-    if not Path(fichpizarron).exists():
+    if not Path(Path(fichpizarron).expanduser()).exists():
         return
     print ("Tratando de leer el fichero \"{}\".".format(fichpizarron))
     with open(Path(fichpizarron).expanduser(), "r", newline = "") as hfpizarron:
@@ -344,7 +344,8 @@ def lee_pizarron():
         for fila in lectorcsv:
             conti = [int(v) for v in fila[0].split("-")]
             contf = [int(v) for v in fila[1].split("-")]
-            pizarron.append([conti, contf, datetime.datetime.fromisoformat(fila[2]), int(fila[3])])
+            pizarron.append([conti, contf, datetime.datetime
+                             .fromisoformat(fila[2]), int(fila[3])])
     print("Leido el pizarron {}.".format(pizarron))
 
 def main():
