@@ -36,7 +36,7 @@ fichpizarron = "" # El fichero donde está guardado el pizarron.
 mintep = datetime.timedelta(seconds = 60 * 5) # El tiempo mínimo de escritura del pizarron, el tiempo mínimo que tiene que esperar para volver a escribir el pizarron al fichero.
 momue = None # Momento de la última escritura.
 
-puerto = 8000 # El puerto del servidor por el que se va a producir la comunicación.
+puerto = 8080 # El puerto del servidor por el que se va a producir la comunicación.
 
 def probarPalabra(fichpassph, palabra):
     global config
@@ -221,11 +221,11 @@ def servir_avisar_roto(contador):
 
 def administrar_servidor(fichpassph, fuente, conti):
     global pizarron, partes, contfichpassph, cantpp, roto, puerto
-    print("Iniciando servidor")
+    print("Iniciando servidor en el puerto {}.".format(puerto))
     partes = lee_partes(fuente)
     elimina_repeticiones(partes)
     contfichpassph = lee_fichpassph(fichpassph)
-    with xmlrpc.server.SimpleXMLRPCServer(("localhost", puerto)) as servidor:
+    with xmlrpc.server.SimpleXMLRPCServer(("0.0.0.0", puerto)) as servidor:
         servidor.register_introspection_functions()
         servidor.register_function(servir_partes)
         servidor.register_function(servir_fichpassph)
