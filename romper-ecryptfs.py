@@ -9,6 +9,8 @@ import datetime
 import math
 import xmlrpc.server
 import xmlrpc.client
+import csv
+from pathlib import Path
 
 config = {
     "ecryptcomm": "ecryptfs-unwrap-passphrase",
@@ -19,14 +21,20 @@ inicio = None
 final = None
 cantcp = 10   # Cantidad de combinaciones probadas por punto.
 cantpr = 100  # Cantidad de pruebas por reporte.
-cantpp = 1000 # Cantidad de pruebas por paquete.
 
-pizarron = [] # El pizarrón para llevar el estado de los trabajos.
+cantpp = 1000 # Cantidad de pruebas por paquete.
+maxtp = datetime.timedelta(seconds = 60 * 10) # El tiempo máximo que se va a esperar un paquete.
+
 partes = []   # La lista de las partes.
 contfichpassph = None # El contenido del ficher passphrase.
 roto = False  # Indica si ya logramos romper el passphrase.
-maxtp = datetime.timedelta(seconds = 60 * 10) # El tiempo máximo que se va a esperar un paquete.
+
 conti = [0]   # El contador inicial.
+
+pizarron = [] # El pizarrón para llevar el estado de los trabajos.
+fichpizarron = "" # El fichero donde está guardado el pizarron.
+mintep = datetime.timedelta(seconds = 60 * 5) # El tiempo mínimo de escritura del pizarron, el tiempo mínimo que tiene que esperar para volver a escribir el pizarron al fichero.
+momue = None # Momento de la última escritura.
 
 def probarPalabra(fichpassph, palabra):
     global config
@@ -130,15 +138,16 @@ def servir_trabajo():
     contisel = None
     contfsel = None
     contfante = None
-    tpaquete = None
+    tpaquete = []
     print("Sirviendo trabajo ...")
     # Verifica si ya fue roto el passphrase, si lo fue no hay que
     # seguir dando trabajos.
     if roto:
-        tpaquete = None
+        tpaquete = []
     # Verifica el pizarrón
     elif (pizarron == None) or (len(pizarron) == 0):
         # Si el pizarrón está vacío registra el primer trabajo.
+        print("El pizarron no existe, creando el primer trabajo ...")
         contisel = conti
         contfsel = conti.copy()
         sumarle_decimal_contador(contfsel, base, cantpp)
@@ -148,12 +157,16 @@ def servir_trabajo():
         # Sino, si el pizarrón ya existe, ya tiene trabajos,
         # verificalo en busca de trabajos.
         for paquete in pizarron:
+            print("Comparando {}".format(paquete))
             if (paquete[3] == 1) and ((datetime.datetime.now() - paquete[2]) > maxtp):
                 # Si encuentras un trabajo que ya se le pasó el tiempo, tomalo.
+                print ("Sirviendo trabajo viejo ...")
                 paquete[2] = datetime.datetime.now()
                 tpaquete = paquete
+                break
             elif (contfante != None) and (restar_contador(paquete[0], contfante) > 0):
                 # Sino, si encuentras un espacio entre 2 trabajos, tomalo.
+                print ("Armando un trabajo entre 2 trabajos previos ...")
                 contisel = contfante
                 contfsel = contfante.copy()
                 tam_esp = restar_contador(paquete[0], contfante)
@@ -161,13 +174,16 @@ def servir_trabajo():
                     tam_esp = cantpp
                 sumarle_decimal_contador(contfsel, base, tam_esp)
                 tpaquete = [contisel, contfsel, datetime.datetime.now(), 1]
+                break
         else:
             # Sino, agrega uno nuevo al final.
+            print("Sirviendo un trabajo nuevo ...")
             contisel = pizarron[-1][1]
             contfsel = pizarron[-1][1].copy()
             sumarle_decimal_contador(contfsel, base, cantpp)
             tpaquete = [contisel, contfsel, datetime.datetime.now(), 1]
         pizarron.append(tpaquete)
+    escribir_pizarron()
     print("Sirviendo {}.".format(tpaquete))
     return tpaquete
 
@@ -189,6 +205,7 @@ def servir_avisar_final(paquete):
             del(pizarron[i])
         else:
             i += 1
+    escribir_pizarron()
     return 0
 
 def servir_avisar_roto(contador):
@@ -198,6 +215,7 @@ def servir_avisar_roto(contador):
     combinacion = armar_combinacion(partes, contador)
     print("Encontré el passphrase, es la palabra \"{}\", la combinacion {}."
           .format(combinacion, contador))
+    return 0
 
 def administrar_servidor(fichpassph, fuente, conti):
     global pizarron, partes, contfichpassph, cantpp, roto
@@ -205,7 +223,6 @@ def administrar_servidor(fichpassph, fuente, conti):
     partes = lee_partes(fuente)
     elimina_repeticiones(partes)
     contfichpassph = lee_fichpassph(fichpassph)
-    # pizarron = leer_pizarron()
     with xmlrpc.server.SimpleXMLRPCServer(("localhost", 8080)) as servidor:
         servidor.register_introspection_functions()
         servidor.register_function(servir_partes)
@@ -213,7 +230,11 @@ def administrar_servidor(fichpassph, fuente, conti):
         servidor.register_function(servir_trabajo)
         servidor.register_function(servir_avisar_final)
         servidor.register_function(servir_avisar_roto)
-        servidor.serve_forever()
+        try:
+            servidor.serve_forever()
+        except (KeyboardInterrupt, Exception) as exp:
+            escribir_pizarron(ver_mintep = False)
+            raise exp
 
 def recibir_fichero(servicio, contfichero):
     global config
@@ -230,7 +251,7 @@ def administrar_cliente(url):
         recibir_fichero(servicio, contfichero)
         while not roto:
             trabajo = servicio.servir_trabajo()
-            if trabajo == None:
+            if len(trabajo) == 0:
                 break
             roto, cont = ataque_combinaciones(
                 config["temppassphrase"],
@@ -295,8 +316,39 @@ def ataque_combinaciones(fichpassph, partes, conti, contf):
     print("Probé {} combinaciones.".format(cprob))
     return (roto, conti)
 
+def escribir_pizarron(ver_mintep = True):
+    global fichpizarron, pizarron, mintep, momue
+    if (((ver_mintep) and (momue != None)
+        and ((datetime.datetime.now() - momue) < mintep))
+        or (fichpizarron == "")):
+        return
+    print("Escribiendo fichero pizarron \"{}\"".format(fichpizarron))
+    momue = datetime.datetime.now()
+    with open(Path(fichpizarron).expanduser(), "w", newline="") as hfpizarron:
+        escritor = csv.writer(hfpizarron, delimiter = ",", quotechar="\"")
+        for paquete in pizarron:
+            conti = "-".join([str(v) for v in paquete[0]])
+            contf = "-".join([str(v) for v in paquete[1]])
+            escritor.writerow([conti, contf, paquete[2].isoformat(), paquete[3]])
+
+def lee_pizarron():
+    global fichpizarron, pizarron
+    conti = []
+    contf = []
+    pizarron = []
+    if not Path(fichpizarron).exists():
+        return
+    print ("Tratando de leer el fichero \"{}\".".format(fichpizarron))
+    with open(Path(fichpizarron).expanduser(), "r", newline = "") as hfpizarron:
+        lectorcsv = csv.reader(hfpizarron, delimiter = ",", quotechar="\"")
+        for fila in lectorcsv:
+            conti = [int(v) for v in fila[0].split("-")]
+            contf = [int(v) for v in fila[1].split("-")]
+            pizarron.append([conti, contf, datetime.datetime.fromisoformat(fila[2]), int(fila[3])])
+    print("Leido el pizarron {}.".format(pizarron))
+
 def main():
-    global inicio, final
+    global inicio, final, fichpizarron
     contadores = [0]
     # Revisa los argumentos.
     if ((len(sys.argv) < 3)
@@ -315,6 +367,9 @@ def main():
             if arg.startswith("--cont="):
                 contadores = [int(parte) for parte in arg[len("--cont="):].split("-")]
                 print("Iniciando en Contador {}".format(contadores))
+            elif arg.startswith("--pizarron="):
+                fichpizarron = arg[len("--pizarron="):]
+                lee_pizarron()
         print("Tratando de romper el passpharse {}.".format(sys.argv[2]))
         administrar_servidor(sys.argv[2], sys.argv[3], contadores)
     elif sys.argv[1].strip().lower() == "--cliente":
