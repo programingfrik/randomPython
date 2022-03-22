@@ -112,15 +112,11 @@ def sumarle_decimal_contador(contador, base, decimal):
     contador[cont] += decimal
 
 def completa_ceros(contador, n):
-    contador = ([0] * (n - len(contador))) + contador
-    return contador
-
-def verificar_menor(conta, contb):
-    if len(conta) > len(contb):
-        contb = completa_ceros(contb, len(conta))
-    elif len(contb) > len(conta):
-        conta = completa_ceros(conta, len(contb))
-    return conta < contb
+    if n > len(contador):
+        temp = ([0] * (n - len(contador))) + contador
+        return temp
+    else:
+        return contador
 
 def lee_fichpassph(fichpassph):
     with open(fichpassph, "rb") as hfich:
@@ -191,6 +187,42 @@ def servir_trabajo():
     print("Sirviendo {}.".format(tpaquete))
     return tpaquete
 
+def verificar_continuos(paqueteA, paqueteB):
+    return (((paqueteA[3] == 0) and (paqueteA[3] == paqueteB[3]))
+            and ((paqueteA[1] == paqueteB[0]) or (paqueteB[1] == paqueteA[0])))
+
+def verificar_solapados(paqueteA, paqueteB):
+    tam = max([len(paqueteA[0]), len(paqueteA[1]),
+               len(paqueteB[0]), len(paqueteB[1])])
+    tempA1 = completa_ceros(paqueteA[0], tam)
+    tempA2 = completa_ceros(paqueteA[1], tam)
+    tempB1 = completa_ceros(paqueteB[0], tam)
+    tempB2 = completa_ceros(paqueteB[1], tam)
+    return (((paqueteA[3] == 0) and (paqueteA[3] == paqueteB[3]))
+            and (((tempA1 <= tempB1) and (tempB1 < tempA2))
+                 or ((tempA1 <= tempB2) and (tempB2 < tempA2))))
+
+def mezclar_paquetes(paqueteA, paqueteB):
+    tam = max([len(paqueteA[0]), len(paqueteA[1]),
+               len(paqueteB[0]), len(paqueteB[1])])
+    tempA1 = completa_ceros(paqueteA[0], tam)
+    tempA2 = completa_ceros(paqueteA[1], tam)
+    tempB1 = completa_ceros(paqueteB[0], tam)
+    tempB2 = completa_ceros(paqueteB[1], tam)
+    if tempA1 <= tempB1:
+        conti = paqueteA[0]
+    else:
+        conti = paqueteB[0]
+    if tempA2 > tempB2:
+        contf = paqueteA[1]
+    else:
+        contf = paqueteB[1]
+    if paqueteA[2] < paqueteB[2]:
+        momento = paqueteA[2]
+    else:
+        momento = paqueteB[2]
+    return [conti, contf, momento, 0]
+
 def servir_avisar_final(paquete):
     global pizarron
     i = 0
@@ -203,12 +235,12 @@ def servir_avisar_final(paquete):
         # print("Comparando {} con {}".format(paquete[0], pizarron[i][0]))
         if paquete[0] == pizarron[i][0]:
             pizarron[i][3] = 0
-        # Si hay un trabajo previo en el pizarron, también terminado
-        # concatenalos en uno solo para marcar que ese intervalo ya se
-        # reviso.
-        if ((i > 0) and (pizarron[i - 1][1] == pizarron[i][0])
-            and (pizarron[i][3] == 0) and (pizarron[i - 1][3] == pizarron[i][3])):
-            pizarron[i - 1][1] = pizarron[i][1]
+        # Si hay un trabajo previo al actual en el pizarron, también
+        # terminado, y son continuos o se solapan, concatenalos en uno
+        # solo para evitar tener un montón de intervalos sueltos.
+        if ((i > 0) and (verificar_continuos(pizarron[i - 1], pizarron[i])
+                         or verificar_solapados(pizarron[i - 1], pizarron[i]))):
+            pizarron[i - 1] = mezclar_paquetes(pizarron[i - 1], pizarron[i])
             del(pizarron[i])
         else:
             i += 1
@@ -299,7 +331,7 @@ def ataque_combinaciones(fichpassph, partes, conti, contf):
     combinacion = ""
     base = len(partes)
     print("Probando combinaciones con {} partes.".format(base))
-    while verificar_menor(cont, contf):
+    while completa_ceros(cont, len(contf)) < completa_ceros(contf, len(cont)):
         # print(cont)
         combinacion = armar_combinacion(partes, cont)
         # Prueba la combinación.
