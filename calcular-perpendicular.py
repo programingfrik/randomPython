@@ -5,20 +5,36 @@
 # las coordenadas de una recta normal a una recta descrita por los
 # puntos A y B, a una distancia H.
 
-def calcularPRN(A, B, H):
-    pass
+def calcular_perpendicular(a, b, h):
+    X = 0
+    Y = 1
 
-def pruebaCalculo(A, B, H, C):
-    Cc = calcularPRN(A, B, H)
-    if (C == Cc):
-        print("Pasó!")
+    m = ((b[X] + a[X]) // 2, (b[Y] + a[Y]) // 2)
+
+    return m
+
+def probar_calculo(a, b, h, c, mensaje = None):
+    if mensaje:
+        mensaje += " "
     else:
-        print("No pasó")
+        mensaje = "prueba "
+
+    print(f"Haciendo {mensaje}calcular_perpendicular"
+          + f"({a}, {b}, {h})\n    Esperado {c}")
+
+    cc = calcular_perpendicular(a, b, h)
+
+    print(f"    Valor obtenido {cc}\n    ", end = "")
+
+    if (c != cc):
+        print("No ", end = "")
+
+    print("Pasó!\n")
 
 def main():
-    
-    pass
-    
+    probar_calculo((5, 0), (15, 0), 5, (10, 5), "prueba evidente 1")
+    probar_calculo((15, 0), (5, 0), 5, (10, -5), "prueba evidente 2")
+    probar_calculo((5, 5), (5, 15), 5, (0, 10), "prueba evidente 3")
 
 if __name__ == "__main__":
     main()
