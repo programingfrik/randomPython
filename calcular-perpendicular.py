@@ -9,9 +9,11 @@ def calcular_perpendicular(a, b, h):
     X = 0
     Y = 1
 
-    m = ((b[X] + a[X]) // 2, (b[Y] + a[Y]) // 2)
+    med = ((b[X] + a[X]) // 2, (b[Y] + a[Y]) // 2)
 
-    return m
+    m = (b[Y] - a[y]) // (b[X] - a[X])
+
+    return med
 
 def probar_calculo(a, b, h, c, mensaje = None):
     if mensaje:
