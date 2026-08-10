@@ -5,6 +5,13 @@
 # las coordenadas de una recta normal a una recta descrita por los
 # puntos A y B, a una distancia H.
 
+import math
+
+def rotar_punto(p, a):
+    prx = p[0] * math.cos(a) - p[1] * math.sin(a)
+    pry = p[0] * math.sin(a) + p[1] * math.cos(a)
+    return prx, pry
+
 def calcular_perpendicular(a, b, h):
     X = 0
     Y = 1
@@ -12,6 +19,10 @@ def calcular_perpendicular(a, b, h):
     med = ((b[X] + a[X]) // 2, (b[Y] + a[Y]) // 2)
 
     m = (b[Y] - a[y]) // (b[X] - a[X])
+
+    vr = b[X] - a[X], b[Y] - a[Y]
+
+    avr = math.atan2(vr[Y], vr[X])
 
     return med
 
