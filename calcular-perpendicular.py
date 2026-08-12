@@ -7,30 +7,51 @@
 
 import math
 
+X = 0
+Y = 1
+
 def rotar_punto(p, a):
-    prx = p[0] * math.cos(a) - p[1] * math.sin(a)
-    pry = p[0] * math.sin(a) + p[1] * math.cos(a)
+    global X, Y
+    prx = p[X] * math.cos(a) - p[Y] * math.sin(a)
+    pry = p[X] * math.sin(a) + p[Y] * math.cos(a)
     return prx, pry
 
-def calcular_perpendicular(a, b, h):
-    X = 0
-    Y = 1
+def normalizar(v):
+    global X, Y
+    modulo = math.sqrt(v[X] ** 2 + v[Y] ** 2)
+    vn = v[X] / modulo, v[Y] / modulo
 
-    med = ((b[X] + a[X]) // 2, (b[Y] + a[Y]) // 2)
+def calcular_perpendicular(a, b, h):
+    global X, Y
+
+    # Calcula el punto medio
+    med = ((b[X] + a[X]) / 2, (b[Y] + a[Y]) / 2)
 
     # Calculando la pendiente
-    if b[X] != a[X]:
-        m = (b[Y] - a[Y]) // (b[X] - a[X])
-    elif b[Y] > a[Y]:
-        m = 0; # + infinito
-    elif b[Y] < a[Y]:
-        m = 0; # - infinito
+    # if b[X] != a[X]:
+    #     m = (b[Y] - a[Y]) // (b[X] - a[X])
+    # elif b[Y] > a[Y]:
+    #     m = 0; # + infinito
+    # elif b[Y] < a[Y]:
+    #     m = 0; # - infinito
 
+    # Calcula el "vertor real"
     vr = b[X] - a[X], b[Y] - a[Y]
 
-    avr = math.atan2(vr[Y], vr[X])
+    # Normaliza el vector real
+    vrn = normalizar(vr)
 
-    return med
+    # Rota 90 grados al vector real normalizado
+    # TODO: ¿Radianes o grados?
+    vrnr = rotar_punto(vrn, 90)
+
+    # avr = math.atan2(vr[Y], vr[X])
+
+    # Solo queda multiplicarlo por h para que tenga la longitud
+    # solicitada y trasladarlo al sitio del punto medio.
+    vp = (vrnr[X] * h) + med[X], (vrnr[Y] * h) + med[Y]
+
+    return vp
 
 def probar_calculo(a, b, h, c, mensaje = None):
     if mensaje:
