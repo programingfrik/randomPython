@@ -18,7 +18,13 @@ def calcular_perpendicular(a, b, h):
 
     med = ((b[X] + a[X]) // 2, (b[Y] + a[Y]) // 2)
 
-    m = (b[Y] - a[y]) // (b[X] - a[X])
+    # Calculando la pendiente
+    if b[X] != a[X]:
+        m = (b[Y] - a[Y]) // (b[X] - a[X])
+    elif b[Y] > a[Y]:
+        m = 0; # + infinito
+    elif b[Y] < a[Y]:
+        m = 0; # - infinito
 
     vr = b[X] - a[X], b[Y] - a[Y]
 
